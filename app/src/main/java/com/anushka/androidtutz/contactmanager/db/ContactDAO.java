@@ -1,13 +1,15 @@
-package com.anushka.androidtutz.contactmanager.db.entity;
+package com.anushka.androidtutz.contactmanager.db;
 
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
+import com.anushka.androidtutz.contactmanager.db.entity.Contact;
+
 import java.util.List;
 
-public interface ContactDao {
+public interface ContactDAO {
     @Insert
     public long addContact(Contact contact);
 
