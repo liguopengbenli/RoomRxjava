@@ -6,15 +6,31 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import androidx.annotation.Nullable;
+import androidx.room.Ignore;
+
 import com.anushka.androidtutz.contactmanager.db.entity.Contact;
 
 import java.util.ArrayList;
 
-
+//Not using replaced by Room implementation
 public class DatabaseHelper extends SQLiteOpenHelper {
+    public DatabaseHelper(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
+        super(context, name, factory, version);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
 
 
-    private static final int DATABASE_VERSION = 1;
+   /* private static final int DATABASE_VERSION = 1;
 
 
     private static final String DATABASE_NAME = "contact_db";
@@ -134,5 +150,5 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.delete(Contact.TABLE_NAME, Contact.COLUMN_ID + " = ?",
                 new String[]{String.valueOf(contact.getId())});
         db.close();
-    }
+    }*/
 }
