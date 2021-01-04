@@ -29,8 +29,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Completable;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
+import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
@@ -42,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     //private DatabaseHelper db;
     private ContactsAppDatabase contactsAppDatabase;
     private CompositeDisposable compositeDisposable;
+    private long rowIdOfItemInserted;
 
 
     @Override
@@ -55,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recycler_view_contacts);
         //db = new DatabaseHelper(this);
         contactsAppDatabase = Room.databaseBuilder(getApplicationContext(), ContactsAppDatabase.class, "ContactDB")
-                                  .allowMainThreadQueries().build();
+                                  .build();
 
         //contactArrayList.addAll(contactsAppDatabase.getContactDAO().getContact());
 
@@ -187,33 +191,85 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void deleteContact(Contact contact, int position) {
+    private void deleteContact(final Contact contact, final int position) {
+
+        compositeDisposable.add(
+                Completable.fromAction(new Action() {
+                    @Override
+                    public void run() throws Exception {
+                        contactsAppDatabase.getContactDAO().deleteContact(contact);
+                    }
+                }).subscribeOn(Schedulers.io()).observeOn(Schedulers.newThread()).subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Toast.makeText(getApplicationContext(), "contact delete successfully " , Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(getApplicationContext(), "Error occurred", Toast.LENGTH_LONG).show();
+
+                    }
+                }));
 
         //contactArrayList.remove(position);
-        contactsAppDatabase.getContactDAO().deleteContact(contact);
         //contactsAdapter.notifyDataSetChanged();
     }
 
-    private void updateContact(String name, String email, int position) {
+    private void updateContact(final String name, final String email, final int position) {
 
-        Contact contact = contactArrayList.get(position);
+        final Contact contact = contactArrayList.get(position);
 
         contact.setName(name);
         contact.setEmail(email);
 
-        contactsAppDatabase.getContactDAO().updateContact(contact);
+        compositeDisposable.add(
+                Completable.fromAction(new Action() {
+                    @Override
+                    public void run() throws Exception {
+                        contactsAppDatabase.getContactDAO().updateContact(contact);
+                    }
+                }).subscribeOn(Schedulers.io()).observeOn(Schedulers.newThread()).subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Toast.makeText(getApplicationContext(), "contact updated successfully " , Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(getApplicationContext(), "Error occurred", Toast.LENGTH_LONG).show();
+
+                    }
+                }));
 
         //contactArrayList.set(position, contact);
-
         //contactsAdapter.notifyDataSetChanged();
-
-
     }
 
-    private void createContact(String name, String email) {
+    private void createContact(final String name,  final String email) {
+
+        compositeDisposable.add(
+        Completable.fromAction(new Action() {
+            @Override
+            public void run() throws Exception {
+                rowIdOfItemInserted = contactsAppDatabase.getContactDAO().addContact(new Contact(0, name, email));
+            }
+        }).subscribeOn(Schedulers.io()).observeOn(Schedulers.newThread()).subscribeWith(new DisposableCompletableObserver() {
+            @Override
+            public void onComplete() {
+              Toast.makeText(getApplicationContext(), "contact add successfully " + rowIdOfItemInserted, Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Toast.makeText(getApplicationContext(), "Error occurred", Toast.LENGTH_LONG).show();
+
+            }
+        }));
+
 
         //long id = db.insertContact(name, email);
-        long id = contactsAppDatabase.getContactDAO().addContact(new Contact(0, name, email));
+        //long id = contactsAppDatabase.getContactDAO().addContact(new Contact(0, name, email));
 
         //Contact contact = db.getContact(id);
         /*Contact contact = contactsAppDatabase.getContactDAO().getContact(id);
