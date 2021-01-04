@@ -29,6 +29,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
+
 public class MainActivity extends AppCompatActivity {
 
     private ContactsAdapter contactsAdapter;
@@ -36,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     //private DatabaseHelper db;
     private ContactsAppDatabase contactsAppDatabase;
+    private CompositeDisposable compositeDisposable;
 
 
     @Override
@@ -51,7 +57,8 @@ public class MainActivity extends AppCompatActivity {
         contactsAppDatabase = Room.databaseBuilder(getApplicationContext(), ContactsAppDatabase.class, "ContactDB")
                                   .allowMainThreadQueries().build();
 
-        contactArrayList.addAll(contactsAppDatabase.getContactDAO().getContact());
+        //contactArrayList.addAll(contactsAppDatabase.getContactDAO().getContact());
+
 
         //contactArrayList.addAll(db.getAllContacts());
 
@@ -60,6 +67,24 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(contactsAdapter);
+        compositeDisposable.add(
+        contactsAppDatabase.getContactDAO().getContact()
+                .subscribeOn(Schedulers.computation())
+                .observeOn(Schedulers.newThread())       //AndroidSchedulers.maintThread but not compatible in RxAndroid3
+                .subscribe(new Consumer<List<Contact>>() {
+                               @Override
+                               public void accept(List<Contact> contacts) throws Exception {
+                                   contactArrayList.clear();
+                                   contactArrayList.addAll(contacts);
+                                   contactsAdapter.notifyDataSetChanged();
+                               }
+                           }, new Consumer<Throwable>() {
+                               @Override
+                               public void accept(Throwable throwable) throws Exception {
+
+                               }
+                           }
+                ));
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -164,9 +189,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void deleteContact(Contact contact, int position) {
 
-        contactArrayList.remove(position);
+        //contactArrayList.remove(position);
         contactsAppDatabase.getContactDAO().deleteContact(contact);
-        contactsAdapter.notifyDataSetChanged();
+        //contactsAdapter.notifyDataSetChanged();
     }
 
     private void updateContact(String name, String email, int position) {
@@ -178,9 +203,9 @@ public class MainActivity extends AppCompatActivity {
 
         contactsAppDatabase.getContactDAO().updateContact(contact);
 
-        contactArrayList.set(position, contact);
+        //contactArrayList.set(position, contact);
 
-        contactsAdapter.notifyDataSetChanged();
+        //contactsAdapter.notifyDataSetChanged();
 
 
     }
@@ -191,15 +216,17 @@ public class MainActivity extends AppCompatActivity {
         long id = contactsAppDatabase.getContactDAO().addContact(new Contact(0, name, email));
 
         //Contact contact = db.getContact(id);
-        Contact contact = contactsAppDatabase.getContactDAO().getContact(id);
-
-
+        /*Contact contact = contactsAppDatabase.getContactDAO().getContact(id);
         if (contact != null) {
-
             contactArrayList.add(0, contact);
             contactsAdapter.notifyDataSetChanged();
+        }*/
 
-        }
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.dispose();
     }
 }
