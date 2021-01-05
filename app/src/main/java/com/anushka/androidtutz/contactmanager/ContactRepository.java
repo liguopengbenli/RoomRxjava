@@ -76,7 +76,7 @@ public class ContactRepository {
     }
 
 
-    private void updateContact(final Contact contact) {
+    public void updateContact(final Contact contact) {
         compositeDisposable.add(
                 Completable.fromAction(new Action() {
                     @Override
@@ -97,7 +97,7 @@ public class ContactRepository {
                 }));
     }
 
-    private void deleteContact(final Contact contact) {
+    public void deleteContact(final Contact contact) {
 
         compositeDisposable.add(
                 Completable.fromAction(new Action() {

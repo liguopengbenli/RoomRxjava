@@ -15,6 +15,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -46,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private ContactsAppDatabase contactsAppDatabase;
     private CompositeDisposable compositeDisposable;
     private long rowIdOfItemInserted;
+    private ContactViewModel contactViewModel;
 
 
     @Override
@@ -55,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(" Contacts Manager");
+
+        contactViewModel = new ViewModelProvider(this).get(ContactViewModel.class);
 
         recyclerView = findViewById(R.id.recycler_view_contacts);
         //db = new DatabaseHelper(this);
@@ -71,7 +76,17 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(contactsAdapter);
-        compositeDisposable.add(
+
+        contactViewModel.getAllContacts().observe(this, new Observer<List<Contact>>() {
+            @Override
+            public void onChanged(List<Contact> contacts) {
+                contactArrayList.clear();
+                contactArrayList.addAll(contacts);
+                contactsAdapter.notifyDataSetChanged();
+            }
+        });
+
+        /*compositeDisposable.add(
         contactsAppDatabase.getContactDAO().getContact()
                 .subscribeOn(Schedulers.computation())
                 .observeOn(Schedulers.newThread())       //AndroidSchedulers.maintThread but not compatible in RxAndroid3
@@ -88,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
 
                                }
                            }
-                ));
+                ));*/
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -192,8 +207,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteContact(final Contact contact, final int position) {
-
-        compositeDisposable.add(
+        contactViewModel.deleteContact(contact);
+        /*compositeDisposable.add(
                 Completable.fromAction(new Action() {
                     @Override
                     public void run() throws Exception {
@@ -210,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Error occurred", Toast.LENGTH_LONG).show();
 
                     }
-                }));
+                }));*/
 
         //contactArrayList.remove(position);
         //contactsAdapter.notifyDataSetChanged();
@@ -223,7 +238,9 @@ public class MainActivity extends AppCompatActivity {
         contact.setName(name);
         contact.setEmail(email);
 
-        compositeDisposable.add(
+        contactViewModel.updateContact(contact);
+
+        /*compositeDisposable.add(
                 Completable.fromAction(new Action() {
                     @Override
                     public void run() throws Exception {
@@ -240,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Error occurred", Toast.LENGTH_LONG).show();
 
                     }
-                }));
+                }));*/
 
         //contactArrayList.set(position, contact);
         //contactsAdapter.notifyDataSetChanged();
@@ -248,7 +265,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void createContact(final String name,  final String email) {
 
-        compositeDisposable.add(
+        contactViewModel.createContact(name, email);
+
+        /*compositeDisposable.add(
         Completable.fromAction(new Action() {
             @Override
             public void run() throws Exception {
@@ -265,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Error occurred", Toast.LENGTH_LONG).show();
 
             }
-        }));
+        }));*/
 
 
         //long id = db.insertContact(name, email);
@@ -283,6 +302,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        compositeDisposable.dispose();
+        //compositeDisposable.dispose();
+        contactViewModel.clear();
     }
 }
