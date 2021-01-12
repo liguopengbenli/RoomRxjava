@@ -31,6 +31,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import io.reactivex.Completable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Action;
@@ -45,7 +47,8 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Contact> contactArrayList = new ArrayList<>();
     private RecyclerView recyclerView;
     //private DatabaseHelper db;
-    private ContactsAppDatabase contactsAppDatabase;
+    @Inject
+    public ContactsAppDatabase contactsAppDatabase;
     private CompositeDisposable compositeDisposable;
     private long rowIdOfItemInserted;
     private ContactViewModel contactViewModel;
@@ -63,9 +66,8 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recycler_view_contacts);
         //db = new DatabaseHelper(this);
-        contactsAppDatabase = Room.databaseBuilder(getApplicationContext(), ContactsAppDatabase.class, "ContactDB")
-                                  .build();
-
+        //contactsAppDatabase = Room.databaseBuilder(getApplicationContext(), ContactsAppDatabase.class, "ContactDB").build();
+        App.getApp().getContactsAppComponent().inject(this);
         //contactArrayList.addAll(contactsAppDatabase.getContactDAO().getContact());
 
 
